@@ -781,7 +781,7 @@ export default function FloodSim() {
       </Canvas>
 
       {/* HUD */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-3">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-2 p-3">
         <div className="pointer-events-auto rounded-xl bg-ink/80 px-3 py-2 ring-1 ring-line-strong backdrop-blur">
           <p className="font-mono text-lg leading-none tabular-nums">T+{t.toFixed(1)}<span className="text-xs text-muted"> h</span></p>
           <p className="mt-1 whitespace-nowrap font-mono text-[10px] text-muted">Front {frontKm.toFixed(1)} km · breach {Math.round(breachProgress(t) * 100)}%</p>
