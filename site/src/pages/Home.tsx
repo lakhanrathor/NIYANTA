@@ -256,7 +256,9 @@ function Demos() {
   const v = videos[active]
   const ok = !!youtubeId(v.url)
   return (
-    <Tile title="Demo videos" className="lg:col-span-3 lg:row-span-2" i={2}>
+    <Tile title="Demo videos" className="lg:col-span-6" i={2}>
+      <div className="grid min-h-0 flex-1 gap-3 md:grid-cols-[1.15fr_1fr]">
+      <div className="flex min-w-0 flex-col">
       <div className="relative aspect-video shrink-0 overflow-hidden rounded-xl bg-black">
         {playing && ok ? (
           <YouTubeEmbed url={v.url} title={v.title} />
@@ -272,7 +274,8 @@ function Demos() {
         )}
       </div>
       <p className="mt-2 text-sm font-medium leading-snug">{v.title}</p>
-      <ul className="mt-3 flex min-h-0 flex-1 flex-col gap-1">
+      </div>
+      <ul className="flex min-h-0 flex-col gap-1 overflow-y-auto">
         {videos.map((x, i) => (
           <li key={x.title}>
             <button
@@ -290,6 +293,7 @@ function Demos() {
           </li>
         ))}
       </ul>
+      </div>
     </Tile>
   )
 }
@@ -299,22 +303,22 @@ function Impact() {
   const close = useCallback(() => setOpen(false), [])
   return (
     <Tile title="The problem · our approach" className="cursor-pointer transition-colors hover:border-line-strong lg:col-span-3" i={3} onClick={() => setOpen(true)}>
-      <div className="grid grid-cols-2 gap-2">
+      <p className="text-xs text-muted">Three failure scenarios, one hydrodynamic engine:</p>
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        {scenarios.map((s) => (
+          <div key={s.n} className="relative overflow-hidden rounded-lg">
+            <img src={s.cases[0].image} alt={s.cases[0].name} className="aspect-[4/3] w-full object-cover opacity-70" />
+            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-1.5 text-[10px] font-medium leading-tight text-white">{s.title}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
         {impactStats.slice(0, 4).map((s) => (
           <div key={s.label} className="rounded-xl bg-ink/60 p-2.5 ring-1 ring-line">
             <p className="text-xl font-semibold tracking-tight">
               <CountUp value={s.value} decimals={s.decimals} prefix={s.prefix} suffix={s.suffix} duration={1.4} />
             </p>
             <p className="mt-0.5 text-[11px] leading-snug text-muted">{s.label}</p>
-          </div>
-        ))}
-      </div>
-      <p className="mt-3 text-xs text-muted">Three failure scenarios, one hydrodynamic engine:</p>
-      <div className="mt-2 grid grid-cols-3 gap-2">
-        {scenarios.map((s) => (
-          <div key={s.n} className="relative overflow-hidden rounded-lg">
-            <img src={s.cases[0].image} alt={s.cases[0].name} className="aspect-[4/3] w-full object-cover opacity-70" />
-            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-1.5 text-[10px] font-medium leading-tight text-white">{s.title}</span>
           </div>
         ))}
       </div>
@@ -326,7 +330,7 @@ function Impact() {
         <div className="space-y-4 p-5 pr-10">
           <div>
             <p className="eyebrow mb-1 !text-[0.62rem]">The problem</p>
-            <p className="text-sm leading-relaxed text-muted">
+            <p className="text-[15px] leading-relaxed text-muted">
               India has thousands of ageing large dams and millions of people living downstream. When a dam fails, the flood wave can reach towns within <span className="text-fg">minutes to hours</span>. Most existing studies are static maps that don’t say who is at risk or when the water arrives.
             </p>
           </div>
@@ -334,8 +338,8 @@ function Impact() {
             {impactStats.map((s) => (
               <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="rounded-xl bg-ink/60 p-2.5 ring-1 ring-line hover:ring-aqua/40">
                 <p className="text-lg font-semibold tracking-tight">{s.prefix ?? ''}{s.value.toLocaleString('en-IN')}{s.suffix}</p>
-                <p className="mt-0.5 text-[11px] leading-snug text-muted">{s.label}</p>
-                <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-dim">{s.source} ↗</p>
+                <p className="mt-0.5 text-[12.5px] leading-snug text-muted">{s.label}</p>
+                <p className="mt-1 font-mono text-[10.5px] uppercase tracking-wider text-dim">{s.source} ↗</p>
               </a>
             ))}
           </div>
@@ -346,15 +350,15 @@ function Impact() {
                 <div key={s.n} className="overflow-hidden rounded-xl bg-ink/60 ring-1 ring-line">
                   <img src={s.cases[0].image} alt={s.cases[0].name} className="aspect-[3/1] w-full object-cover sm:aspect-[16/9]" />
                   <div className="p-2.5">
-                    <p className="text-xs font-semibold"><span className="font-mono text-aqua">{s.n}</span> {s.title}</p>
-                    <p className="mt-1 text-[11px] leading-snug text-muted">{s.short}</p>
-                    <p className="mt-1.5 hidden text-[10px] leading-snug text-dim sm:block">{s.chain.join(' → ')}</p>
-                    <a href={s.cases[0].href} target="_blank" rel="noreferrer" className="mt-1.5 block text-[10px] text-aqua hover:underline">e.g. {s.cases[0].name} ↗</a>
+                    <p className="text-[13px] font-semibold"><span className="font-mono text-aqua">{s.n}</span> {s.title}</p>
+                    <p className="mt-1 text-[12.5px] leading-snug text-muted">{s.short}</p>
+                    <p className="mt-1.5 hidden text-[11.5px] leading-snug text-dim sm:block">{s.chain.join(' → ')}</p>
+                    <a href={s.cases[0].href} target="_blank" rel="noreferrer" className="mt-1.5 block text-[11.5px] text-aqua hover:underline">e.g. {s.cases[0].name} ↗</a>
                   </div>
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-[11px] text-muted">
+            <p className="mt-2 text-[12.5px] text-muted">
               All three feed one engine: <span className="text-fg">breach model → outflow hydrograph → hydrodynamic solver</span>, giving flood extent, depth, velocity, arrival time and the people and assets at risk.
             </p>
           </div>
@@ -421,7 +425,7 @@ function Research() {
               <p className="eyebrow mb-2 !text-[0.62rem]">Method</p>
               <ol className="space-y-1.5">
                 {method.map((m, i) => (
-                  <li key={m.t} className="text-xs leading-snug text-muted">
+                  <li key={m.t} className="text-[13px] leading-snug text-muted">
                     <span className="mr-1 font-mono text-aqua">{i + 1}.</span><span className="text-fg">{m.t}:</span> {m.b}
                   </li>
                 ))}
@@ -431,7 +435,7 @@ function Research() {
               <p className="eyebrow mb-2 !text-[0.62rem]">Roadmap</p>
               <ol className="flex flex-wrap gap-1">
                 {roadmap.map((r) => (
-                  <li key={r.title} className={`rounded-full px-2 py-0.5 text-[10px] ring-1 ${r.status === 'done' ? 'text-aqua ring-aqua/40' : r.status === 'active' ? 'bg-flare/10 text-flare ring-flare/40' : 'text-dim ring-line-strong'}`}>
+                  <li key={r.title} className={`rounded-full px-2 py-0.5 text-[11.5px] ring-1 ${r.status === 'done' ? 'text-aqua ring-aqua/40' : r.status === 'active' ? 'bg-flare/10 text-flare ring-flare/40' : 'text-dim ring-line-strong'}`}>
                     {r.status === 'done' ? '✓ ' : ''}{r.title}
                   </li>
                 ))}
@@ -441,7 +445,7 @@ function Research() {
               <p className="eyebrow mb-2 !text-[0.62rem]">Real-world validation</p>
               <ul className="space-y-1.5">
                 {validationCases.map((c) => (
-                  <li key={c.name} className="flex gap-2 text-xs leading-snug">
+                  <li key={c.name} className="flex gap-2 text-[13px] leading-snug">
                     <span className="w-14 shrink-0 font-semibold">{c.accuracy}</span>
                     <span className="text-muted"><span className="text-fg">{c.name}.</span> {c.result}</span>
                   </li>
@@ -453,15 +457,12 @@ function Research() {
             <div>
               <p className="eyebrow mb-2 !text-[0.62rem]">Is our breach flow correct? · Peak Q (m³/s)</p>
               <BreachBars detailed />
-              <p className="mt-2 rounded-lg border border-flare/30 bg-flare/[0.06] p-2 text-[11px] leading-snug text-muted">
-                Same order as the only published Tehri study (ratio 0.67). Our first run was <span className="text-fg">5.8× too high</span>. Our own cross-check found a depth bug, and we fixed it.
-              </p>
             </div>
             <div>
               <p className="eyebrow mb-2 !text-[0.62rem]">References · {references.length}</p>
               <ul className="space-y-0.5">
                 {references.map((r, i) => (
-                  <li key={r.title} className="text-[11px] leading-snug">
+                  <li key={r.title} className="text-[12.5px] leading-snug">
                     <span className="font-mono text-dim">{String(i + 1).padStart(2, '0')} </span>
                     <a href={r.href} target="_blank" rel="noreferrer" className="hover:text-aqua" title={`${r.title} · ${r.authors} (${r.year})`}>{r.title}</a>
                     <span className="text-dim"> · {r.authors.split(',')[0]}{r.year !== '—' && ` ${r.year}`}</span>
@@ -520,9 +521,9 @@ export default function Home() {
       <Header />
       <Identity />
       <Simulation />
-      <Demos />
-      <Impact />
       <Research />
+      <Impact />
+      <Demos />
       <Team />
     </main>
   )

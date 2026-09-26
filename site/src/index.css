@@ -20,8 +20,8 @@
   --color-line: rgb(40 90 125 / 0.12);
   --color-line-strong: rgb(40 90 125 / 0.22);
   --color-fg: #14304a;
-  --color-muted: #48647a;
-  --color-dim: #7890a2;
+  --color-muted: #2c465b;
+  --color-dim: #56707f;
   --color-aqua: #0a8fbd;
   --color-teal: #3bb8cf;
   --color-deep: #cfeaf3;
@@ -54,7 +54,7 @@
 :root[data-theme="sky"] {
   --color-ink: #e3f0ff; --color-abyss: #d6e8fd; --color-surface: #eef6ff; --color-raise: #c9e0fa;
   --color-line: rgb(30 90 170 / 0.14); --color-line-strong: rgb(30 90 170 / 0.26);
-  --color-fg: #10294d; --color-muted: #3e5a80; --color-dim: #7188a8;
+  --color-fg: #10294d; --color-muted: #2a4468; --color-dim: #52698a;
   --color-aqua: #1b6fd6; --color-teal: #4ea4f2; --color-deep: #c4dcfb;
   --blob-a: rgb(170 205 255 / 0.8); --blob-b: rgb(200 190 255 / 0.55); --blob-c: rgb(180 240 255 / 0.6);
   --base-1: #e8f3ff; --base-2: #d9eafd;
