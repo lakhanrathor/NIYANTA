@@ -9,7 +9,6 @@ import { breachCheck, impactStats, problem, references, roadmap, scenarios, vali
 import { simulationReels, videos, youtubeId } from '../content/videos'
 import { team, teamMeta } from '../content/team'
 
-const TopoField = lazy(() => import('../components/three/TopoField'))
 const FloodSim = lazy(() => import('../components/three/FloodSim'))
 
 function Tile({ title, className = '', children, i = 0, onClick }: { title?: string; className?: string; children: ReactNode; i?: number; onClick?: () => void }) {
@@ -119,25 +118,60 @@ function Header() {
 }
 
 function Identity() {
-  const steps = ['Observe', 'Simulate', 'Assess', 'Validate', 'Guide', 'Act']
   return (
-    <Tile className="lg:col-span-3" i={0}>
-      <Suspense fallback={null}>
-        <TopoField className="absolute inset-0 opacity-35" />
-      </Suspense>
+    <Tile className="![background:#ffffff] lg:col-span-3" i={0}>
       <div className="relative flex h-full flex-col">
         <p className="font-['Noto_Serif_Devanagari'] text-4xl leading-none xl:text-5xl">नियंता</p>
         <p className="mt-2 text-sm text-muted">Sanskrit / Hindi: <span className="text-fg">one who guides, regulates and directs.</span></p>
-        <p className="mt-3 text-sm leading-relaxed text-muted">
-          A decision-support system for <span className="text-fg">dam-break flood modelling</span>. It turns satellite, terrain and hydrodynamic data into flood extent, depth, velocity and arrival time, so authorities can act before the water arrives.
-        </p>
-        <div className="mt-auto flex flex-wrap items-center gap-1 pt-3 text-[11px]">
-          {steps.map((s, k) => (
-            <span key={s} className="flex items-center gap-1">
-              <span className={`rounded-full px-2 py-0.5 ring-1 ${k === steps.length - 1 ? 'bg-aqua/10 text-aqua ring-aqua/40' : 'ring-line-strong'}`}>{s}</span>
-              {k < steps.length - 1 && <span className="text-dim">→</span>}
-            </span>
-          ))}
+        <div className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+          <p className="text-[14px] leading-relaxed text-muted">
+            From the root <span className="font-['Noto_Serif_Devanagari'] text-aqua">√यम्</span> (yam): to restrain, control, regulate or guide, with <span className="text-fg">ni-</span> adding directed control.
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {['Controller', 'Regulator', 'One who directs', 'One who guides'].map((u) => (
+              <span key={u} className="rounded-full bg-[var(--chip-bg)] px-2 py-0.5 text-[11px] ring-1 ring-line">{u}</span>
+            ))}
+          </div>
+          <p className="text-[14px] leading-relaxed">
+            <span className="text-[15px] font-semibold text-aqua">Someone who brings a situation under direction and enables an appropriate response.</span>
+          </p>
+          <div className="rounded-xl bg-[var(--chip-bg)] p-3 ring-1 ring-line">
+            <p className="eyebrow !text-[0.6rem]">Why the name fits</p>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-muted">
+              NIYANTA doesn’t claim to control nature or stop a flood. It helps control the <span className="text-fg">response</span>: turning complex data into informed decisions.
+            </p>
+            <p className="mt-2 flex flex-wrap items-center gap-1 text-[11px] text-muted">
+              {['Uncertainty', 'Understanding', 'Prediction', 'Prioritization', 'Action'].map((w, k, a) => (
+                <span key={w} className="flex items-center gap-1">
+                  <span className={k === a.length - 1 ? 'font-semibold text-aqua' : 'text-fg'}>{w}</span>
+                  {k < a.length - 1 && <span className="text-dim">→</span>}
+                </span>
+              ))}
+            </p>
+          </div>
+          <p className="text-[14px] leading-relaxed text-muted">
+            A decision-support system for <span className="text-fg">dam-break flood modelling</span>. It turns satellite, terrain and hydrodynamic data into flood extent, depth, velocity and arrival time, so authorities can act before the water arrives.
+          </p>
+          <div>
+            <p className="eyebrow mb-1.5 !text-[0.6rem]">From data to action</p>
+            <ol className="grid grid-cols-2 gap-1.5">
+              {[
+                ['Observe', 'Satellite, DEM, hydrology'],
+                ['Understand', 'GIS preprocessing'],
+                ['Simulate', 'Breach + DualSPHysics + Delft3D'],
+                ['Assess', 'Depth, velocity, arrival'],
+                ['Identify', 'People, buildings, roads'],
+                ['Validate', 'Sentinel-1 + Earth Engine'],
+                ['Guide', 'NIYANTA dashboard'],
+                ['Act', 'Decision support'],
+              ].map(([st, w], i) => (
+                <li key={st} className="rounded-lg bg-[var(--chip-bg)] px-2 py-1.5 ring-1 ring-line">
+                  <p className="text-[11.5px] font-semibold"><span className="mr-1 font-mono text-[10px] text-dim">{String(i + 1).padStart(2, '0')}</span>{st}</p>
+                  <p className="text-[10.5px] leading-tight text-muted">{w}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
       </div>
     </Tile>
@@ -241,7 +275,7 @@ function Simulation() {
   const reel = simulationReels[tab]
   const id = reel ? youtubeId(reel.url) : null
   return (
-    <Tile className="!p-0 max-lg:h-[60vh] lg:col-span-6" i={1}>
+    <Tile className="!p-0 max-lg:h-[60vh] lg:col-span-12" i={1}>
       {id && reel ? (
         <ReelPlayer id={id} start={reel.start} seconds={reel.seconds} caption={reel.caption} url={reel.url} />
       ) : (
@@ -260,51 +294,108 @@ function Simulation() {
   )
 }
 
+const PAPER_URL = 'https://docs.google.com/document/d/19pTYxYWuT0p_naN2KaG0I4K9a7KnYG69/edit'
+
+/** Middle tile (player + research paper) and right tile (playlist) share one selection. */
+/** ?video=N (1-based) in the URL opens the site with that demo already playing — used for links in the PPT. */
+function linkedVideo() {
+  const n = Number(new URLSearchParams(window.location.search).get('video'))
+  return Number.isInteger(n) && n >= 1 && n <= videos.length && youtubeId(videos[n - 1].url) ? n - 1 : null
+}
+
 function Demos() {
-  const [active, setActive] = useState(0)
-  const [playing, setPlaying] = useState(false)
+  const [deep] = useState(linkedVideo)
+  const [active, setActive] = useState(deep ?? 0)
+  const [playing, setPlaying] = useState(deep !== null)
+  // browsers only allow autoplay without a click when muted; one tap then restarts it with sound
+  const [muted, setMuted] = useState(deep !== null)
+  const player = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (deep !== null) player.current?.scrollIntoView({ block: 'center' })
+  }, [deep])
+  const [open, setOpen] = useState(false)
+  const close = useCallback(() => setOpen(false), [])
   const v = videos[active]
   const ok = !!youtubeId(v.url)
   return (
-    <Tile title="Demo videos" className="lg:col-span-6" i={2}>
-      <div className="grid min-h-0 flex-1 gap-3 md:grid-cols-[1.15fr_1fr]">
-      <div className="flex min-w-0 flex-col">
-      <div className="relative aspect-video shrink-0 overflow-hidden rounded-xl bg-black">
-        {playing && ok ? (
-          <YouTubeEmbed url={v.url} title={v.title} />
-        ) : (
-          <button className="group absolute inset-0 disabled:cursor-default" disabled={!ok} onClick={() => setPlaying(true)} aria-label={`Play ${v.title}`}>
-            <YouTubeThumb url={v.url} title={v.title} className="h-full w-full" />
-            {ok && (
-              <span className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-fg transition-transform group-hover:scale-110">
-                <Icon name="play" className="h-5 w-5" />
-              </span>
-            )}
-          </button>
-        )}
-      </div>
-      <p className="mt-2 text-sm font-medium leading-snug">{v.title}</p>
-      </div>
-      <ul className="flex min-h-0 flex-col gap-1 overflow-y-auto">
-        {videos.map((x, i) => (
-          <li key={x.title}>
-            <button
-              onClick={() => { setActive(i); setPlaying(!!youtubeId(x.url)) }}
-              className={`flex w-full items-center gap-3 rounded-lg p-1.5 text-left transition-colors ${i === active ? 'bg-aqua/10 ring-1 ring-aqua/30' : 'hover:bg-aqua/5'}`}
-            >
-              <span className="relative aspect-video w-20 shrink-0 overflow-hidden rounded-md">
-                <YouTubeThumb url={x.url} title={x.title} className="h-full w-full [&_span]:hidden" />
-              </span>
-              <span className="min-w-0">
-                <span className="block font-mono text-[9px] uppercase tracking-wider text-dim">{x.tag}{youtubeId(x.url) ? '' : ' · soon'}</span>
-                <span className="block text-xs leading-snug">{x.title}</span>
-              </span>
+    <>
+      <Tile title="Demo videos" className="lg:col-span-6" i={2}>
+        <div ref={player} className="relative aspect-video shrink-0 overflow-hidden rounded-xl bg-black">
+          {playing && ok ? (
+            <>
+              <YouTubeEmbed key={`${v.url}-${muted}`} url={v.url} title={v.title} muted={muted} />
+              {muted && (
+                <button onClick={() => setMuted(false)} className="absolute left-1/2 top-[62%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-aqua px-4 py-2 text-sm font-medium text-white shadow-lg ring-2 ring-white/70 animate-pulse">
+                  <Icon name="play" className="h-3.5 w-3.5" /> Tap to play with sound
+                </button>
+              )}
+            </>
+          ) : (
+            <button className="group absolute inset-0 disabled:cursor-default" disabled={!ok} onClick={() => setPlaying(true)} aria-label={`Play ${v.title}`}>
+              <YouTubeThumb url={v.url} title={v.title} className="h-full w-full" />
+              {ok && (
+                <span className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-fg transition-transform group-hover:scale-110">
+                  <Icon name="play" className="h-5 w-5" />
+                </span>
+              )}
             </button>
-          </li>
-        ))}
-      </ul>
-      </div>
-    </Tile>
+          )}
+        </div>
+        <p className="mt-2 text-sm font-medium leading-snug">{v.title}</p>
+
+        <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto rounded-xl bg-[var(--chip-bg)] p-3 ring-1 ring-line">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="eyebrow !text-[0.6rem]">Our research paper</p>
+              <p className="mt-1 text-[15px] font-semibold leading-snug">NIYANTA: Dam-break inundation modelling for Tehri Dam</p>
+            </div>
+            <Icon name="doc" className="h-6 w-6 shrink-0 text-aqua" />
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <a href={PAPER_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-aqua px-4 py-2 text-[13px] font-medium text-white shadow-sm transition-transform hover:scale-[1.03]">
+              Read our research paper <Icon name="arrowUpRight" className="h-3.5 w-3.5" />
+            </a>
+            <button onClick={() => setOpen(true)} className="chip hover:!text-fg">Method, roadmap &amp; references</button>
+          </div>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted">
+            We model a Tehri Dam breach end to end: Froehlich (2008) breach parameters, DualSPHysics near the dam and ANUGA / Delft3D routing over the 30 m Copernicus DEM. Our peak breach flow of <span className="font-medium text-fg">6.59 lakh m³/s</span> is the same order as the only published Tehri study, with first flood arrival in about <span className="font-medium text-fg">1 hour</span> and ~2.66 lakh people exposed.
+          </p>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {validationCases.map((c) => (
+              <div key={c.name} className="rounded-lg bg-surface/70 p-2 ring-1 ring-line">
+                <p className="text-sm font-semibold">{c.accuracy}</p>
+                <p className="text-[10.5px] leading-tight text-muted">{c.name.split(',')[0].split(' (')[0]}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3">
+            <p className="mb-1.5 text-[11px] text-muted">Peak breach flow at Tehri Dam (m³/s)</p>
+            <BreachBars />
+          </div>
+        </div>
+        <ResearchModal open={open} onClose={close} />
+      </Tile>
+
+      <Tile title="All videos" className="lg:col-span-3" i={4}>
+        <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+          {videos.map((x, i) => (
+            <li key={x.title}>
+              <button
+                onClick={() => { setActive(i); setPlaying(!!youtubeId(x.url)); setMuted(false) }}
+                className={`w-full overflow-hidden rounded-xl p-1.5 text-left transition-colors ${i === active ? 'bg-aqua/10 ring-1 ring-aqua/30' : 'hover:bg-aqua/5'}`}
+              >
+                <span className="relative block aspect-video w-full overflow-hidden rounded-lg">
+                  <YouTubeThumb url={x.url} title={x.title} className="h-full w-full" />
+                  {i === active && playing && <span className="absolute left-2 top-2 rounded-full bg-aqua px-2 py-0.5 text-[10px] font-medium text-white">Now playing</span>}
+                </span>
+                <span className="mt-1.5 block px-0.5 font-mono text-[9.5px] uppercase tracking-wider text-dim">{x.tag}{youtubeId(x.url) ? '' : ' · soon'}</span>
+                <span className="block px-0.5 text-[13px] leading-snug">{x.title}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Tile>
+    </>
   )
 }
 
@@ -312,28 +403,65 @@ function Impact() {
   const [open, setOpen] = useState(false)
   const close = useCallback(() => setOpen(false), [])
   return (
-    <Tile title="The problem · our approach" className="cursor-pointer transition-colors hover:border-line-strong lg:col-span-3" i={3} onClick={() => setOpen(true)}>
-      <p className="text-xs text-muted">Three failure scenarios, one hydrodynamic engine:</p>
-      <div className="mt-2 grid grid-cols-3 gap-2">
-        {scenarios.map((s) => (
-          <div key={s.n} className="relative overflow-hidden rounded-lg">
-            <img src={s.cases[0].image} alt={s.cases[0].name} className="aspect-[4/3] w-full object-cover opacity-70" />
-            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-1.5 text-[10px] font-medium leading-tight text-white">{s.title}</span>
+    <Tile title="The problem · our approach" className="lg:col-span-12" i={3}>
+      <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto lg:grid-cols-2 lg:overflow-hidden">
+        <div className="flex min-h-0 flex-col gap-5 lg:justify-center">
+          <h2 className="display text-[clamp(1.6rem,2.6vw,2.4rem)] leading-tight">
+            When a dam fails, people downstream have <span className="text-aqua">minutes, not hours.</span>
+          </h2>
+          <p className="text-[15px] leading-relaxed text-muted">
+            India has thousands of ageing dams and millions of people living below them. When one fails, the flood can reach towns within <span className="font-medium text-fg">minutes to hours</span>, and most studies are static maps that don’t say who is at risk or when the water arrives.
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {impactStats.map((st) => (
+              <a key={st.label} href={st.href} target="_blank" rel="noreferrer" className="flex flex-col justify-center rounded-xl bg-ink/60 p-4 ring-1 ring-line transition-colors hover:ring-aqua/40">
+                <p className="text-[clamp(1.5rem,2.4vw,2.4rem)] font-semibold tracking-tight">
+                  <CountUp value={st.value} decimals={st.decimals} prefix={st.prefix} suffix={st.suffix} duration={1.4} />
+                </p>
+                <p className="mt-1 text-[13.5px] leading-snug text-muted">{st.label}</p>
+                <p className="mt-1.5 font-mono text-[9.5px] uppercase tracking-wider text-dim">{st.source} ↗</p>
+              </a>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        {impactStats.slice(0, 4).map((s) => (
-          <div key={s.label} className="rounded-xl bg-ink/60 p-2.5 ring-1 ring-line">
-            <p className="text-xl font-semibold tracking-tight">
-              <CountUp value={s.value} decimals={s.decimals} prefix={s.prefix} suffix={s.suffix} duration={1.4} />
-            </p>
-            <p className="mt-0.5 text-[11px] leading-snug text-muted">{s.label}</p>
+        </div>
+        <div className="flex min-h-0 flex-col gap-3 lg:justify-center">
+          <p className="eyebrow !text-[0.65rem]">Our approach · three ways a dam fails</p>
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            {scenarios.map((sc) => (
+              <div key={sc.n} className="flex min-h-0 flex-col overflow-hidden rounded-xl bg-ink/60 ring-1 ring-line">
+                <img src={sc.cases[0].image} alt={sc.cases[0].name} className="aspect-[16/10] w-full object-cover lg:max-xl:aspect-[5/1] xl:aspect-[4/3]" />
+                <div className="flex flex-col p-3">
+                  <p className="text-[14px] font-semibold"><span className="mr-1 font-mono text-aqua">{sc.n}</span>{sc.title}</p>
+                  <p className="mt-1 text-[12.5px] leading-snug text-muted">{sc.short}</p>
+                  <p className="mt-2 text-[11px] leading-snug text-dim">{sc.chain.join(' → ')}</p>
+                  <a href={sc.cases[0].href} target="_blank" rel="noreferrer" className="pt-2 text-[11.5px] text-aqua hover:underline">e.g. {sc.cases[0].name} ↗</a>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="mt-auto flex justify-end pt-3">
-        <span className="chip">Details <Icon name="arrowUpRight" className="h-3 w-3" /></span>
+          <div>
+            <p className="eyebrow mb-2 !text-[0.65rem]">What NIYANTA delivers</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {[
+                ['Flood extent', 'Inundation map'],
+                ['Depth & velocity', 'd(x,t), v(x,t)'],
+                ['Arrival time', 'At key towns'],
+                ['People at risk', 'WorldPop / Census'],
+                ['Infrastructure', 'Roads, bridges (OSM)'],
+                ['Reports', 'PDF · GeoTIFF · KML'],
+              ].map(([t, d]) => (
+                <div key={t} className="rounded-lg bg-aqua/5 px-3 py-2 ring-1 ring-aqua/20">
+                  <p className="text-[13px] font-semibold">{t}</p>
+                  <p className="text-[11.5px] text-muted">{d}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-aqua/10 px-4 py-3 ring-1 ring-aqua/30">
+            <p className="text-[13px] text-muted">All three feed one engine: <span className="font-medium text-fg">breach model → outflow hydrograph → hydrodynamic solver</span></p>
+            <button onClick={() => setOpen(true)} className="chip hover:!text-fg">All details <Icon name="arrowUpRight" className="h-3 w-3" /></button>
+          </div>
+        </div>
       </div>
 
       <Modal open={open} onClose={close} label="The problem and our approach" className="max-w-[720px]">
@@ -405,85 +533,63 @@ function BreachBars({ detailed = false }: { detailed?: boolean }) {
   )
 }
 
-function Research() {
-  const [open, setOpen] = useState(false)
-  const close = useCallback(() => setOpen(false), [])
-  const done = roadmap.filter((r) => r.status === 'done').length
+function ResearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <Tile title="Research & validation" className="cursor-pointer transition-colors hover:border-line-strong lg:col-span-3" i={4} onClick={() => setOpen(true)}>
-      <p className="text-[11px] text-muted">Peak breach flow at Tehri Dam (m³/s)</p>
-      <div className="mt-2"><BreachBars /></div>
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        {validationCases.map((c) => (
-          <div key={c.name} className="rounded-lg bg-ink/60 p-2 ring-1 ring-line">
-            <p className="text-sm font-semibold">{c.accuracy}</p>
-            <p className="text-[10px] leading-tight text-muted">{c.name.split(',')[0].split(' (')[0]}</p>
+    <Modal open={open} onClose={onClose} label="Research and validation" className="max-w-[760px]">
+      <div className="grid gap-5 p-5 pr-10 md:grid-cols-2">
+        <div className="space-y-4">
+          <div>
+            <p className="eyebrow mb-2 !text-[0.62rem]">Method</p>
+            <ol className="space-y-1.5">
+              {method.map((m, i) => (
+                <li key={m.t} className="text-[13px] leading-snug text-muted">
+                  <span className="mr-1 font-mono text-aqua">{i + 1}.</span><span className="text-fg">{m.t}:</span> {m.b}
+                </li>
+              ))}
+            </ol>
           </div>
-        ))}
-      </div>
-      <div className="mt-auto flex items-center justify-between gap-2 pt-3 text-[11px]">
-        <span className="text-muted">
-          Roadmap <span className="text-fg">{done}/{roadmap.length}</span> · now: <span className="text-flare">{roadmap.find((r) => r.status === 'active')?.title}</span>
-        </span>
-        <span className="chip">Details <Icon name="arrowUpRight" className="h-3 w-3" /></span>
-      </div>
-
-      <Modal open={open} onClose={close} label="Research and validation" className="max-w-[760px]">
-        <div className="grid gap-5 p-5 pr-10 md:grid-cols-2">
-          <div className="space-y-4">
-            <div>
-              <p className="eyebrow mb-2 !text-[0.62rem]">Method</p>
-              <ol className="space-y-1.5">
-                {method.map((m, i) => (
-                  <li key={m.t} className="text-[13px] leading-snug text-muted">
-                    <span className="mr-1 font-mono text-aqua">{i + 1}.</span><span className="text-fg">{m.t}:</span> {m.b}
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div>
-              <p className="eyebrow mb-2 !text-[0.62rem]">Roadmap</p>
-              <ol className="flex flex-wrap gap-1">
-                {roadmap.map((r) => (
-                  <li key={r.title} className={`rounded-full px-2 py-0.5 text-[11.5px] ring-1 ${r.status === 'done' ? 'text-aqua ring-aqua/40' : r.status === 'active' ? 'bg-flare/10 text-flare ring-flare/40' : 'text-dim ring-line-strong'}`}>
-                    {r.status === 'done' ? '✓ ' : ''}{r.title}
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div>
-              <p className="eyebrow mb-2 !text-[0.62rem]">Real-world validation</p>
-              <ul className="space-y-1.5">
-                {validationCases.map((c) => (
-                  <li key={c.name} className="flex gap-2 text-[13px] leading-snug">
-                    <span className="w-14 shrink-0 font-semibold">{c.accuracy}</span>
-                    <span className="text-muted"><span className="text-fg">{c.name}.</span> {c.result}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div>
+            <p className="eyebrow mb-2 !text-[0.62rem]">Roadmap</p>
+            <ol className="flex flex-wrap gap-1">
+              {roadmap.map((r) => (
+                <li key={r.title} className={`rounded-full px-2 py-0.5 text-[11.5px] ring-1 ${r.status === 'done' ? 'text-aqua ring-aqua/40' : r.status === 'active' ? 'bg-flare/10 text-flare ring-flare/40' : 'text-dim ring-line-strong'}`}>
+                  {r.status === 'done' ? '✓ ' : ''}{r.title}
+                </li>
+              ))}
+            </ol>
           </div>
-          <div className="space-y-4">
-            <div>
-              <p className="eyebrow mb-2 !text-[0.62rem]">Is our breach flow correct? · Peak Q (m³/s)</p>
-              <BreachBars detailed />
-            </div>
-            <div>
-              <p className="eyebrow mb-2 !text-[0.62rem]">References · {references.length}</p>
-              <ul className="space-y-0.5">
-                {references.map((r, i) => (
-                  <li key={r.title} className="text-[12.5px] leading-snug">
-                    <span className="font-mono text-dim">{String(i + 1).padStart(2, '0')} </span>
-                    <a href={r.href} target="_blank" rel="noreferrer" className="hover:text-aqua" title={`${r.title} · ${r.authors} (${r.year})`}>{r.title}</a>
-                    <span className="text-dim"> · {r.authors.split(',')[0]}{r.year !== '—' && ` ${r.year}`}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div>
+            <p className="eyebrow mb-2 !text-[0.62rem]">Real-world validation</p>
+            <ul className="space-y-1.5">
+              {validationCases.map((c) => (
+                <li key={c.name} className="flex gap-2 text-[13px] leading-snug">
+                  <span className="w-14 shrink-0 font-semibold">{c.accuracy}</span>
+                  <span className="text-muted"><span className="text-fg">{c.name}.</span> {c.result}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </Modal>
-    </Tile>
+        <div className="space-y-4">
+          <div>
+            <p className="eyebrow mb-2 !text-[0.62rem]">Is our breach flow correct? · Peak Q (m³/s)</p>
+            <BreachBars detailed />
+          </div>
+          <div>
+            <p className="eyebrow mb-2 !text-[0.62rem]">References · {references.length}</p>
+            <ul className="space-y-0.5">
+              {references.map((r, i) => (
+                <li key={r.title} className="text-[12.5px] leading-snug">
+                  <span className="font-mono text-dim">{String(i + 1).padStart(2, '0')} </span>
+                  <a href={r.href} target="_blank" rel="noreferrer" className="hover:text-aqua" title={`${r.title} · ${r.authors} (${r.year})`}>{r.title}</a>
+                  <span className="text-dim"> · {r.authors.split(',')[0]}{r.year !== '—' && ` ${r.year}`}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </Modal>
   )
 }
 
@@ -492,16 +598,21 @@ function Team() {
   const m = open === null ? null : team[open]
   const close = useCallback(() => setOpen(null), [])
   return (
-    <Tile title={`Team ${teamMeta.teamName}`} className="lg:col-span-3" i={5}>
-      <div className="grid min-h-0 flex-1 grid-cols-3 gap-2">
+    <Tile title={`Know our team · ${teamMeta.teamName}`} className="lg:col-span-12" i={5}>
+      <div className="grid min-h-0 flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2">
         {team.map((x, i) => (
-          <button key={x.name} onClick={() => setOpen(i)} className="group relative min-h-[110px] overflow-hidden rounded-lg bg-raise text-left" aria-label={`About ${x.name}`}>
-            {x.photo && <img src={x.photo} alt={x.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-1.5">
-              <p className="text-[11px] font-semibold leading-tight text-white">{x.name}</p>
-              <p className="text-[9px] leading-tight text-sky-200">{x.role.replace('Team Lead · ', 'Lead · ')}</p>
-            </div>
+          <button key={x.name} onClick={() => setOpen(i)} className="group flex min-h-0 overflow-hidden rounded-xl bg-ink/60 text-left ring-1 ring-line transition-colors hover:ring-aqua/40" aria-label={`About ${x.name}`}>
+            <span className="relative w-2/5 shrink-0 overflow-hidden max-lg:aspect-[4/5]">
+              {x.photo && <img src={x.photo} alt={x.name} className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />}
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col p-3">
+              <span className="text-[15px] font-semibold leading-tight">{x.name}</span>
+              <span className="mt-0.5 text-[12px] text-aqua">{x.role}</span>
+              <span className="mt-2 min-h-0 overflow-hidden text-[13px] leading-relaxed text-muted">{x.bio}</span>
+              <span className="mt-auto flex flex-wrap gap-1 pt-2">
+                {x.expertise.slice(0, 4).map((e) => <span key={e} className="chip !px-2 !py-0.5 !text-[10px]">{e}</span>)}
+              </span>
+            </span>
           </button>
         ))}
       </div>
@@ -526,15 +637,24 @@ function Team() {
 }
 
 export default function Home() {
+  // four full-screen "pages" stacked vertically; on phones everything stacks in one column
+  const screen = 'grid gap-3 p-3 lg:h-[100dvh] lg:grid-cols-12 lg:overflow-hidden'
   return (
-    <main className="grid gap-3 p-3 lg:h-[100dvh] lg:grid-cols-12 lg:grid-rows-[auto_minmax(0,1fr)_minmax(0,1fr)] lg:overflow-hidden">
-      <Header />
-      <Identity />
-      <Simulation />
-      <Research />
-      <Impact />
-      <Demos />
-      <Team />
+    <main>
+      <section className={`${screen} lg:grid-rows-[auto_minmax(0,1fr)]`}>
+        <Header />
+        <Identity />
+        <Demos />
+      </section>
+      <section className={`${screen} max-lg:pt-0 lg:grid-rows-[minmax(0,1fr)]`}>
+        <Simulation />
+      </section>
+      <section className={`${screen} max-lg:pt-0 lg:grid-rows-[minmax(0,1fr)]`}>
+        <Impact />
+      </section>
+      <section className={`${screen} max-lg:pt-0 lg:grid-rows-[minmax(0,1fr)]`}>
+        <Team />
+      </section>
     </main>
   )
 }

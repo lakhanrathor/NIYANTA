@@ -33,13 +33,13 @@ export function YouTubeThumb({ url, title, className, hint = 'src/content/videos
   )
 }
 
-export function YouTubeEmbed({ url, title, autoplay = true }: { url: string; title: string; autoplay?: boolean }) {
+export function YouTubeEmbed({ url, title, autoplay = true, muted = false }: { url: string; title: string; autoplay?: boolean; muted?: boolean }) {
   const id = youtubeId(url)
   if (!id) return null
   return (
     <iframe
       className="absolute inset-0 h-full w-full"
-      src={`https://www.youtube-nocookie.com/embed/${id}?${autoplay ? 'autoplay=1&' : ''}rel=0&modestbranding=1&playsinline=1`}
+      src={`https://www.youtube-nocookie.com/embed/${id}?${autoplay ? 'autoplay=1&' : ''}${muted ? 'mute=1&' : ''}rel=0&modestbranding=1&playsinline=1`}
       title={title}
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowFullScreen

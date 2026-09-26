@@ -754,14 +754,25 @@ function Clock({ time, playing, speed, onTick }: { time: React.MutableRefObject<
 /** Pulls the camera back on narrow (portrait) screens so the whole valley stays in frame. */
 const CAM_TARGET = new THREE.Vector3(-2.2, 0.4, 0.4)
 
+const TALL_POS = new THREE.Vector3(-17, 11.5, 0.2) // behind the dam, looking down the valley
+const TALL_TARGET = new THREE.Vector3(1.5, -2, -0.6)
+
 function CameraFit() {
   const { camera, size } = useThree()
   useEffect(() => {
     const aspect = size.width / size.height
-    const base = new THREE.Vector3(-13.5, 12.5, 11.5)
-    camera.position.copy(base.multiplyScalar(aspect < 1 ? 1.25 / Math.max(aspect, 0.45) : 1))
-    camera.lookAt(CAM_TARGET)
-    camera.updateProjectionMatrix()
+    const cam = camera as THREE.PerspectiveCamera
+    if (aspect < 1.15) {
+      // tall tile: view along the river so the valley runs up the screen
+      cam.fov = aspect < 0.7 ? 60 : 50
+      cam.position.copy(TALL_POS)
+      cam.lookAt(TALL_TARGET)
+    } else {
+      cam.fov = 38
+      cam.position.set(-13.5, 12.5, 11.5)
+      cam.lookAt(CAM_TARGET)
+    }
+    cam.updateProjectionMatrix()
   }, [camera, size.width, size.height])
   return null
 }

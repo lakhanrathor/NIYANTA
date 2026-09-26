@@ -9,7 +9,7 @@
  *   aqua / teal / deep             → accent blues
  */
 @theme {
-  --font-sans: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 
@@ -22,8 +22,8 @@
   --color-fg: #14304a;
   --color-muted: #2c465b;
   --color-dim: #56707f;
-  --color-aqua: #0a8fbd;
-  --color-teal: #3bb8cf;
+  --color-aqua: #0f766e;
+  --color-teal: #14b8a6;
   --color-deep: #cfeaf3;
   --color-flare: #e2672e;
   --color-leaf: #1c9a68;
@@ -45,8 +45,8 @@
   --pop-2: #f2f8fb;
   --chip-bg: rgb(255 255 255 / 0.7);
   --grad-1: #14304a;
-  --grad-2: #0a8fbd;
-  --grad-3: #3bb8cf;
+  --grad-2: #0f766e;
+  --grad-3: #14b8a6;
   --shadow: 20 48 74;
 }
 
