@@ -10,8 +10,8 @@ export function YouTubeThumb({ url, title, className, hint = 'src/content/videos
   const src = id ? `https://i.ytimg.com/vi/${id}/${lowRes === id ? 'hqdefault' : 'maxresdefault'}.jpg` : ''
   if (!id)
     return (
-      <div className={`relative grid place-items-center overflow-hidden bg-[radial-gradient(ellipse_at_30%_20%,#123447,#07121c_70%)] ${className ?? ''}`}>
-        <div className="absolute inset-0 opacity-30 [background:repeating-radial-gradient(circle_at_70%_120%,transparent_0_18px,rgb(95_212_255/0.25)_19px_20px)]" />
+      <div className={`relative grid place-items-center overflow-hidden bg-[radial-gradient(ellipse_at_30%_20%,var(--color-deep),var(--color-abyss)_70%)] ${className ?? ''}`}>
+        <div className="absolute inset-0 opacity-30 [background:repeating-radial-gradient(circle_at_70%_120%,transparent_0_18px,rgb(10_143_189/0.18)_19px_20px)]" />
         <div className="relative flex flex-col items-center gap-2 text-center">
           <span className="chip">Video coming soon</span>
           <span className="font-mono text-[11px] text-dim">Add the link in {hint}</span>

@@ -654,7 +654,7 @@ function Town({ t, index, now }: { t: (typeof TOWNS)[number]; index: number; now
   return (
     <group position={[t.x, t.y, t.z]}>
       <Html position={[0, 1.7, 0]} center zIndexRange={[10, 0]}>
-        <div className={`pointer-events-none whitespace-nowrap rounded-lg px-2 py-1 text-center font-mono text-[10px] ring-1 transition-colors duration-500 ${hit ? 'bg-flare/25 text-flare ring-flare/50' : 'bg-ink/80 text-fg ring-line-strong'}`}>
+        <div className={`pointer-events-none whitespace-nowrap rounded-lg px-2 py-1 text-center font-mono text-[10px] ring-1 transition-colors duration-500 ${hit ? 'bg-flare text-white ring-white/40 shadow-md' : 'bg-ink/80 text-fg ring-line-strong'}`}>
           <div className="font-sans text-[11px] font-semibold">{t.name}</div>
           <div>{hit ? `${wet} flooded${gone ? ` · ${gone} lost` : ''}` : `T+${t.arrival.toFixed(1)} h`}</div>
         </div>
@@ -737,7 +737,7 @@ export default function FloodSim() {
   }[mode]
 
   return (
-    <div ref={wrap} className="relative h-full min-h-[300px] overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_top,#0f2432,#050b12_70%)]">
+    <div ref={wrap} className="relative h-full min-h-[300px] overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_top,var(--color-deep),var(--color-abyss)_70%)]">
       <Canvas
         shadows
         dpr={[1, 1.75]}

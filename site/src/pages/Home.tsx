@@ -49,7 +49,7 @@ function Modal({ open, onClose, label, className = '', children }: { open: boole
           aria-label={label}
         >
           <motion.div
-            className={`card relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden !rounded-2xl ${className}`}
+            className={`card card-dark relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden !rounded-2xl ${className}`}
             initial={{ scale: 0.95, y: 8 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.97, opacity: 0 }}
@@ -68,6 +68,38 @@ function Modal({ open, onClose, label, className = '', children }: { open: boole
   )
 }
 
+const THEMES = [
+  { id: 'cloud', name: 'Cloud', swatch: 'linear-gradient(135deg,#ffffff,#cfe9f7)' },
+  { id: 'sky', name: 'Sky', swatch: 'linear-gradient(135deg,#e3f0ff,#8ab8f5)' },
+]
+
+/** Palette picker; the choice is remembered in this browser only. */
+function ThemePicker() {
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'cloud')
+  const pick = (id: string) => {
+    setTheme(id)
+    if (id === 'cloud') delete document.documentElement.dataset.theme
+    else document.documentElement.dataset.theme = id
+    try { localStorage.setItem('niyanta-theme', id) } catch { /* storage blocked */ }
+  }
+  return (
+    <div className="flex items-center gap-1 rounded-full bg-[var(--chip-bg)] p-1 ring-1 ring-line-strong" role="radiogroup" aria-label="Colour theme">
+      {THEMES.map((t) => (
+        <button
+          key={t.id}
+          role="radio"
+          aria-checked={theme === t.id}
+          title={t.name}
+          aria-label={t.name}
+          onClick={() => pick(t.id)}
+          className={`h-5 w-5 rounded-full ring-1 ring-black/10 transition-transform hover:scale-110 ${theme === t.id ? 'outline-2 outline-offset-2 outline-aqua' : ''}`}
+          style={{ background: t.swatch }}
+        />
+      ))}
+    </div>
+  )
+}
+
 function Header() {
   return (
     <header className="flex items-center justify-between gap-4 lg:col-span-12">
@@ -77,6 +109,7 @@ function Header() {
         <span className="hidden text-sm text-muted md:inline">· Intelligence that <span className="serif-accent text-aqua">guides action</span></span>
       </div>
       <div className="flex items-center gap-2">
+        <ThemePicker />
         <span className="chip hidden sm:inline-flex">PS {problem.id}</span>
         <span className="chip hidden md:inline-flex">{problem.theme}</span>
         <img src="/media/sih-2026.webp" alt="Smart India Hackathon 2026" className="h-9 rounded-lg bg-white px-1.5 py-1" />
@@ -156,10 +189,10 @@ function ReelPlayer({ id, start, seconds, caption, url }: { id: string; start: n
         title={caption}
         allow="autoplay; encrypted-media; picture-in-picture"
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-ink/40" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
       <div className="absolute inset-x-0 bottom-0 space-y-2 p-3">
         <div className="flex items-end justify-between gap-3">
-          <p className="text-xs text-fg/90">{caption}</p>
+          <p className="text-xs text-white">{caption}</p>
           <a href={url} target="_blank" rel="noreferrer" className="chip shrink-0 !bg-ink/70 hover:!text-fg">
             Watch with sound <Icon name="arrowUpRight" className="h-3 w-3" />
           </a>
@@ -244,7 +277,7 @@ function Demos() {
           <li key={x.title}>
             <button
               onClick={() => { setActive(i); setPlaying(!!youtubeId(x.url)) }}
-              className={`flex w-full items-center gap-3 rounded-lg p-1.5 text-left transition-colors ${i === active ? 'bg-white/[0.07] ring-1 ring-aqua/30' : 'hover:bg-white/[0.04]'}`}
+              className={`flex w-full items-center gap-3 rounded-lg p-1.5 text-left transition-colors ${i === active ? 'bg-aqua/10 ring-1 ring-aqua/30' : 'hover:bg-aqua/5'}`}
             >
               <span className="relative aspect-video w-20 shrink-0 overflow-hidden rounded-md">
                 <YouTubeThumb url={x.url} title={x.title} className="h-full w-full [&_span]:hidden" />
@@ -281,7 +314,7 @@ function Impact() {
         {scenarios.map((s) => (
           <div key={s.n} className="relative overflow-hidden rounded-lg">
             <img src={s.cases[0].image} alt={s.cases[0].name} className="aspect-[4/3] w-full object-cover opacity-70" />
-            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink to-transparent p-1.5 text-[10px] font-medium leading-tight">{s.title}</span>
+            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-1.5 text-[10px] font-medium leading-tight text-white">{s.title}</span>
           </div>
         ))}
       </div>
@@ -348,8 +381,8 @@ function BreachBars({ detailed = false }: { detailed?: boolean }) {
             <span className={b.ours ? 'text-aqua' : ''}>{b.model}</span>
             <span className="font-mono tabular-nums">{b.approx ? '≈3.9 L' : b.q.toLocaleString('en-IN')}</span>
           </div>
-          <div className="mt-0.5 h-1.5 rounded-full bg-white/5">
-            <div className={`h-full rounded-full ${b.ours ? 'bg-aqua' : 'bg-muted/50'}`} style={{ width: `${(b.q / max) * 100}%` }} />
+          <div className="mt-0.5 h-1.5 rounded-full bg-fg/10">
+            <div className={`h-full rounded-full ${b.ours ? 'bg-aqua' : 'bg-dim/60'}`} style={{ width: `${(b.q / max) * 100}%` }} />
           </div>
           {detailed && <p className="mt-0.5 text-[10px] text-dim">{b.method}</p>}
         </div>
@@ -453,10 +486,10 @@ function Team() {
         {team.map((x, i) => (
           <button key={x.name} onClick={() => setOpen(i)} className="group relative min-h-[110px] overflow-hidden rounded-lg bg-raise text-left" aria-label={`About ${x.name}`}>
             {x.photo && <img src={x.photo} alt={x.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
-            <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-1.5">
-              <p className="text-[11px] font-semibold leading-tight">{x.name}</p>
-              <p className="text-[9px] leading-tight text-aqua">{x.role.replace('Team Lead · ', 'Lead · ')}</p>
+              <p className="text-[11px] font-semibold leading-tight text-white">{x.name}</p>
+              <p className="text-[9px] leading-tight text-sky-200">{x.role.replace('Team Lead · ', 'Lead · ')}</p>
             </div>
           </button>
         ))}

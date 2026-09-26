@@ -68,31 +68,34 @@ const frag = /* glsl */ `
     float dm = abs(fract(hv / 5.0 + 0.5) - 0.5) * 5.0;
     float major = 1.0 - smoothstep(0.0, fw * 1.8, dm);
 
-    vec3 ink = vec3(0.020, 0.043, 0.071);
-    vec3 teal = vec3(0.12, 0.56, 0.68);
-    vec3 aqua = vec3(0.37, 0.83, 1.0);
+    // light theme: pale paper, soft teal contours, blue river
+    vec3 ink = vec3(0.961, 0.976, 0.988);
+    vec3 teal = vec3(0.23, 0.62, 0.72);
+    vec3 aqua = vec3(0.04, 0.56, 0.74);
 
     float elev = smoothstep(-0.6, 0.9, h);
-    vec3 col = ink + vec3(0.0, 0.02, 0.035) * elev;
-    col += teal * line * (0.18 + 0.35 * elev);
-    col += aqua * major * 0.22 * elev;
+    vec3 col = mix(ink, vec3(0.86, 0.93, 0.96), elev * 0.6);
+    col = mix(col, teal, line * (0.25 + 0.3 * elev));
+    col = mix(col, aqua, major * 0.3 * elev);
 
-    // river: glowing core + flowing pulses heading downstream
+    // river: core + flowing pulses heading downstream
     float core = exp(-d * d * 900.0);
     float glow = exp(-d * d * 60.0);
     float flow = 0.5 + 0.5 * sin(p.x * 22.0 - t * 2.4 + sin(p.x * 3.0) * 2.0);
-    col += aqua * (core * (0.55 + 0.45 * flow) + glow * 0.12);
+    col = mix(col, aqua, clamp(core * (0.55 + 0.45 * flow) + glow * 0.12, 0.0, 1.0));
 
     // cursor ring
-    col += aqua * uHover * 0.12 * exp(-pow(md - 0.12, 2.0) * 600.0);
+    col = mix(col, aqua, uHover * 0.25 * exp(-pow(md - 0.12, 2.0) * 600.0));
 
-    // intro sweep and vignette
+    // intro sweep and soft edge fade
     float a = uIntro * 3.0 - 0.6;
     float revealed = 1.0 - smoothstep(a - 0.4, a, uv.x + (1.0 - uv.y));
     col = mix(ink, col, revealed);
     float vig = smoothstep(1.35, 0.2, length((uv - 0.5) * vec2(aspect * 0.8, 1.0)));
-    col *= mix(0.35, 1.0, vig);
-    gl_FragColor = vec4(col, 1.0);
+    col = mix(ink, col, mix(0.4, 1.0, vig));
+    // transparent paper: only lines / river show, so any palette's card colour comes through
+    float alpha = clamp(length(col - ink) * 3.5, 0.0, 1.0);
+    gl_FragColor = vec4(col, alpha);
   }
 `
 
@@ -141,7 +144,7 @@ function Field({ reduced }: { reduced: boolean }) {
   return (
     <mesh frustumCulled={false}>
       <planeGeometry args={[2, 2]} />
-      <shaderMaterial ref={mat} vertexShader={vert} fragmentShader={frag} uniforms={uniforms} depthWrite={false} depthTest={false} />
+      <shaderMaterial ref={mat} vertexShader={vert} fragmentShader={frag} uniforms={uniforms} transparent depthWrite={false} depthTest={false} />
     </mesh>
   )
 }
