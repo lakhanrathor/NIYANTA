@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, OrbitControls, Sky } from '@react-three/drei'
+import { Html, Sky } from '@react-three/drei'
 import * as THREE from 'three'
 import { Icon } from '../Icon'
 
@@ -16,6 +16,8 @@ const X_DAM = -9
 const RANGE = X1 - X_DAM // reach of the flood wave by T_MAX
 const T_MAX = 12 // hours
 const BREACH_TIME = 0.8 // hours, Tb
+const PRESSURE_TIME = 1.2 // hours of water pressing on the dam before it fails
+const WAVE_SPAN = T_MAX - PRESSURE_TIME // time the flood wave has to travel
 
 function hash(x: number, y: number) {
   const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453
@@ -41,7 +43,11 @@ function fbm(x: number, y: number) {
 const center = (x: number) => 1.0 * Math.sin(x * 0.32 + 0.4) + 0.45 * Math.sin(x * 0.85)
 const bed = (x: number) => 1.6 - 0.11 * (x - X0)
 const halfWidth = (x: number) => 0.7 + 0.12 * (x - X0)
-const DAM_TOP = 1.6 - 0.11 * (X_DAM - X0) + 1.7
+const DAM_TOP = 1.6 - 0.11 * (X_DAM - X0) + 1.7 // full reservoir level
+const DAM_CREST = DAM_TOP + 0.45 // freeboard: water never tops the dam
+const DAM_THICK = 1.1
+const BREACH_HALF = 0.6
+const DAM_TURN = 0.3 // radians; faces the dam a little toward the camera
 
 function terrainHeight(x: number, z: number) {
   const dz = z - center(x)
@@ -59,9 +65,15 @@ const smooth = (e0: number, e1: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)))
   return t * t * (3 - 2 * t)
 }
-const breachProgress = (T: number) => smooth(0, BREACH_TIME, T)
-const arrivalTime = (x: number) => (x <= X_DAM ? 0 : T_MAX * Math.pow((x - X_DAM) / RANGE, 1 / 0.7))
-const reservoirLevel = (T: number) => DAM_TOP - 0.1 - 0.85 * breachProgress(T) * (1 - Math.exp(-T / 1.6))
+const breachProgress = (T: number) => smooth(PRESSURE_TIME, PRESSURE_TIME + BREACH_TIME, T)
+/** 0 → 1 as the reservoir rises and loads the dam, before the breach. */
+const pressure = (T: number) => smooth(0, PRESSURE_TIME, T)
+/** Hours since the breach started (0 before it). */
+const sinceBreach = (T: number) => Math.max(0, T - PRESSURE_TIME)
+const arrivalTime = (x: number) => (x <= X_DAM ? PRESSURE_TIME : PRESSURE_TIME + WAVE_SPAN * Math.pow((x - X_DAM) / RANGE, 1 / 0.7))
+// rises almost to the crest (pressure), then drains through the breach
+const reservoirLevel = (T: number) =>
+  DAM_TOP - 0.35 + 0.72 * pressure(T) - 1.2 * breachProgress(T) * (1 - Math.exp(-sinceBreach(T) / 1.6))
 
 function sectionDepth(x: number, T: number) {
   const tau = T - arrivalTime(x)
@@ -75,10 +87,10 @@ function sectionDepth(x: number, T: number) {
 
 const BASE_RIVER = 0.14
 const TOWNS = [
-  { name: 'Village A', x: -5.4, side: 0.42, homes: 14, r: 0.5, big: false },
-  { name: 'Town B', x: 0.6, side: -0.38, homes: 26, r: 0.8, big: false },
-  { name: 'City C', x: 7.2, side: 0.3, homes: 48, r: 1.25, big: true },
-  { name: 'Town D', x: 12.6, side: -0.32, homes: 26, r: 0.9, big: false },
+  { name: 'Village', x: -5.4, side: 0.42, homes: 14, r: 0.5, big: false, label: false },
+  { name: 'Town A', x: 0.6, side: -0.38, homes: 26, r: 0.8, big: false },
+  { name: 'City B', x: 7.2, side: 0.3, homes: 48, r: 1.25, big: true },
+  { name: 'Town C', x: 12.6, side: -0.32, homes: 26, r: 0.9, big: false },
 ].map((t) => {
   const z = center(t.x) + halfWidth(t.x) * t.side
   return { ...t, z, y: terrainHeight(t.x, z), arrival: arrivalTime(t.x) }
@@ -91,6 +103,10 @@ type Mode = 'realistic' | 'depth' | 'velocity' | 'arrival'
 const SUN = new THREE.Vector3(-0.55, 0.42, 0.72).normalize()
 
 /** Surface normal of the analytic terrain, by central differences. */
+const DAM_ZC = center(X_DAM)
+const DAM_COS = Math.cos(DAM_TURN)
+const DAM_SIN = Math.sin(DAM_TURN)
+
 function terrainNormal(x: number, z: number) {
   const e = 0.05
   const dx = terrainHeight(x + e, z) - terrainHeight(x - e, z)
@@ -378,7 +394,7 @@ function Debris({ time }: { time: React.MutableRefObject<number> }) {
     const m = ref.current
     if (!m) return
     const T = time.current
-    const front = Math.min(X1 - 0.3, X_DAM + RANGE * Math.pow(T / T_MAX, 0.7))
+    const front = Math.min(X1 - 0.3, X_DAM + RANGE * Math.pow(sinceBreach(T) / WAVE_SPAN, 0.7))
     const bob = clock.elapsedTime
     seeds.forEach((d, i) => {
       const x = front - 0.2 - d.lag * 7
@@ -517,8 +533,8 @@ function Water({ heights, time, mode }: { heights: Float32Array; time: React.Mut
     const F = (geo.attributes.aFoam as THREE.BufferAttribute).array as Float32Array
     const L = reservoirLevel(T)
     const b = breachProgress(T)
-    const front = X_DAM + RANGE * Math.pow(T / T_MAX, 0.7)
-    const outburst = b * Math.exp(-Math.max(0, T - BREACH_TIME) / 2.5) // strongest right after the breach opens
+    const front = X_DAM + RANGE * Math.pow(sinceBreach(T) / WAVE_SPAN, 0.7)
+    const outburst = b * Math.exp(-Math.max(0, sinceBreach(T) - BREACH_TIME) / 2.5) // strongest right after the breach opens
     const rowLen = SEG_X + 1
     const colSurface = new Float32Array(rowLen)
     const colSection = new Float32Array(rowLen)
@@ -532,7 +548,7 @@ function Water({ heights, time, mode }: { heights: Float32Array; time: React.Mut
         colSection[c] = d
         colSurface[c] = bed(x) + BASE_RIVER + d
         if (x < X_DAM + 0.25) colSurface[c] = Math.max(colSurface[c], L * b + bed(x) * (1 - b))
-        const atFront = T > 0.05 && x <= front ? Math.exp(-(((front - x) / 0.9) ** 2)) : 0
+        const atFront = sinceBreach(T) > 0.05 && x <= front ? Math.exp(-(((front - x) / 0.9) ** 2)) : 0
         const atBreach = Math.exp(-(((x - X_DAM) / 1.6) ** 2)) * outburst
         colFoam[c] = Math.min(1, atFront * 0.9 + atBreach)
       }
@@ -542,14 +558,20 @@ function Water({ heights, time, mode }: { heights: Float32Array; time: React.Mut
       const x = xs[c]
       const h = heights[i]
       const s = colSurface[c]
-      const inValley = x >= X_DAM - 0.2 || Math.abs(P[i * 3 + 2] - center(x)) < halfWidth(x) * 1.5
-      const depth = inValley ? Math.max(0, s - h) : 0
+      const z = P[i * 3 + 2]
+      const inValley = x >= X_DAM - 0.2 || Math.abs(z - center(x)) < halfWidth(x) * 1.5
+      // dam-local coordinates (undo the dam's turn)
+      const dx = x - X_DAM, dz = z - DAM_ZC
+      const lx = dx * DAM_COS - dz * DAM_SIN
+      const lz = dx * DAM_SIN + dz * DAM_COS
+      const inDam = lx > -DAM_THICK * 0.35 && lx < DAM_THICK * 0.75 && Math.abs(lz) > BREACH_HALF * b
+      const depth = inValley && !inDam ? Math.max(0, s - h) : 0
       D[i] = depth
       F[i] = colFoam[c]
       P[i * 3 + 1] = depth > 0 ? s : h - 0.05
       if (mode === 'depth') V[i] = depth / 1.5
       else if (mode === 'velocity') V[i] = x < X_DAM ? 0.05 : Math.sqrt(colSection[c] / 1.4) * Math.exp(-(x - X_DAM) / 16) * 1.25
-      else V[i] = x < X_DAM ? 0 : arrivalTime(x) / T_MAX
+      else V[i] = x < X_DAM ? 0 : (arrivalTime(x) - PRESSURE_TIME) / WAVE_SPAN
     }
     pos.needsUpdate = true
     for (const k of ['aDepth', 'aVal', 'aFoam']) (geo.attributes[k] as THREE.BufferAttribute).needsUpdate = true
@@ -572,7 +594,8 @@ function Spray({ time }: { time: React.MutableRefObject<number> }) {
     const dt = Math.min(dtRaw, 0.05)
     const T = time.current
     const b = breachProgress(T)
-    const intensity = b * Math.exp(-Math.max(0, T - BREACH_TIME) / 2.5)
+    const leak = b > 0 ? 0 : Math.max(0, pressure(T) - 0.45) * 0.5 // seepage before failure
+    const intensity = Math.max(leak, b * Math.exp(-Math.max(0, sinceBreach(T) - BREACH_TIME) / 2.5))
     const { p, v, life } = state
     const L = reservoirLevel(T)
     for (let i = 0; i < N; i++) {
@@ -582,11 +605,12 @@ function Spray({ time }: { time: React.MutableRefObject<number> }) {
           continue
         }
         life[i] = 0.6 + Math.random() * 0.9
-        p[i * 3] = X_DAM + 0.25
+        p[i * 3] = X_DAM + DAM_THICK * 0.8
         p[i * 3 + 1] = bed(X_DAM) + Math.random() * Math.max(0.1, L - bed(X_DAM)) * 0.8
         p[i * 3 + 2] = zc + (Math.random() - 0.5) * 0.55 * b
-        v[i * 3] = 1.2 + Math.random() * 2.2
-        v[i * 3 + 1] = 0.4 + Math.random() * 1.4
+        const jet = b > 0 ? 1 : 0.45
+        v[i * 3] = (1.2 + Math.random() * 2.2) * jet
+        v[i * 3 + 1] = (0.4 + Math.random() * 1.4) * jet
         v[i * 3 + 2] = (Math.random() - 0.5) * 1.2
       }
       life[i] -= dt
@@ -608,40 +632,89 @@ function Spray({ time }: { time: React.MutableRefObject<number> }) {
   )
 }
 
-/** Concrete gravity dam: two abutments stay, the centre section washes out. */
+/** Concrete gravity dam, turned slightly toward the camera. Its centre section breaks into
+ *  blocks that tumble downstream as the breach opens; the abutments stay standing. */
 function Dam({ time }: { time: React.MutableRefObject<number> }) {
-  const mid = useRef<THREE.Mesh>(null)
   const zc = center(X_DAM)
-  const base = bed(X_DAM) - 0.3
-  const H = DAM_TOP - base
-  const hw = halfWidth(X_DAM) * 2.2
-  useFrame(() => {
-    const b = breachProgress(time.current)
-    const h = Math.max(0.001, H * (1 - b * 0.95))
-    if (mid.current) {
-      mid.current.scale.y = h / H
-      mid.current.position.y = base + h / 2
-    }
+  const base = bed(X_DAM) - 0.4
+  const H = DAM_CREST - base
+  const halfLen = halfWidth(X_DAM) * 2.9
+  const sideLen = halfLen - BREACH_HALF
+
+  // trapezoid cross-section: vertical upstream face, sloped downstream face
+  const profile = useMemo(() => {
+    const s = new THREE.Shape()
+    s.moveTo(-DAM_THICK * 0.3, 0)
+    s.lineTo(-DAM_THICK * 0.3, H)
+    s.lineTo(DAM_THICK * 0.05, H)
+    s.lineTo(DAM_THICK * 0.7, 0)
+    s.closePath()
+    return s
+  }, [H])
+  const sideGeo = useMemo(() => {
+    const g = new THREE.ExtrudeGeometry(profile, { depth: sideLen, bevelEnabled: false })
+    g.translate(0, 0, -sideLen / 2)
+    return g
+  }, [profile, sideLen])
+
+  // centre section as a stack of blocks (3 across × 3 high)
+  const blocks = useMemo(() => {
+    const out: { z: number; y: number; w: number; h: number; delay: number; dx: number; spin: number }[] = []
+    const cols = 3, rows = 3
+    for (let c = 0; c < cols; c++)
+      for (let r = 0; r < rows; r++) {
+        const w = (BREACH_HALF * 2) / cols
+        const h = H / rows
+        out.push({
+          z: -BREACH_HALF + w * (c + 0.5),
+          y: base + h * (r + 0.5),
+          w, h,
+          delay: (rows - 1 - r) * 0.12 + Math.abs(c - 1) * 0.1, // top-middle goes first
+          dx: 1.2 + ((c * 7 + r * 3) % 5) * 0.35,
+          spin: ((c + r) % 2 ? 1 : -1) * (0.8 + r * 0.4),
+        })
+      }
+    return out
+  }, [H, base])
+  const refs = useRef<(THREE.Mesh | null)[]>([])
+
+  useFrame(({ clock }) => {
+    const T = time.current
+    blocks.forEach((bl, i) => {
+      const m = refs.current[i]
+      if (!m) return
+      const f = THREE.MathUtils.clamp((breachProgress(T) - bl.delay) / 0.45, 0, 1)
+      const e = f * f
+      const load = pressure(T) ** 3 * (1 - f) // strain shows just before failure
+      const shake = load * 0.035 * Math.sin(clock.elapsedTime * (38 + i * 3))
+      const bulge = load * 0.08 // pushed downstream by the water
+      m.position.set(e * bl.dx + bulge + shake, bl.y - e * (bl.y - base - bl.h * 0.3), bl.z * (1 + e * 0.6) + shake * 0.5)
+      m.rotation.set(e * bl.spin * 0.5, e * 0.4, -e * bl.spin)
+      m.scale.setScalar(1 - e * 0.25)
+    })
   })
-  const mat = <meshStandardMaterial color="#b9b6ae" roughness={0.85} />
-  const side = (hw - 0.35) / 1
+
+  const concrete = <meshStandardMaterial color="#c4c0b6" roughness={0.9} />
   return (
-    <group position={[X_DAM, 0, zc]}>
-      <mesh position={[0, base + H / 2, -(0.35 + side / 2)]} castShadow receiveShadow>
-        <boxGeometry args={[0.45, H, side]} />
-        {mat}
-      </mesh>
-      <mesh ref={mid} position={[0, base + H / 2, 0]} castShadow>
-        <boxGeometry args={[0.45, H, 0.7]} />
-        {mat}
-      </mesh>
-      <mesh position={[0, base + H / 2, 0.35 + side / 2]} castShadow receiveShadow>
-        <boxGeometry args={[0.45, H, side]} />
-        {mat}
-      </mesh>
-      <Html position={[0, DAM_TOP + 0.8, 0]} center zIndexRange={[10, 0]}>
-        <div className="pointer-events-none whitespace-nowrap rounded-full bg-ink/80 px-3 py-1 font-mono text-[11px] text-fg ring-1 ring-line-strong">Dam · breach site</div>
-      </Html>
+    <group position={[X_DAM, 0, zc]} rotation={[0, DAM_TURN, 0]}>
+      {[-1, 1].map((sg) => (
+        <mesh key={sg} geometry={sideGeo} position={[0, base, sg * (BREACH_HALF + sideLen / 2)]} castShadow receiveShadow>
+          {concrete}
+        </mesh>
+      ))}
+      {blocks.map((bl, i) => (
+        <mesh key={i} ref={(el) => { refs.current[i] = el }} position={[0, bl.y, bl.z]} castShadow>
+          <boxGeometry args={[DAM_THICK * 0.62, bl.h * 0.98, bl.w * 0.98]} />
+          {concrete}
+        </mesh>
+      ))}
+      {/* crest road */}
+      {[-1, 1].map((sg) => (
+        <mesh key={`c${sg}`} position={[-DAM_THICK * 0.12, DAM_CREST + 0.02, sg * (BREACH_HALF + sideLen / 2)]}>
+          <boxGeometry args={[DAM_THICK * 0.4, 0.04, sideLen]} />
+          <meshStandardMaterial color="#8f8b83" roughness={0.9} />
+        </mesh>
+      ))}
     </group>
   )
 }
@@ -653,9 +726,9 @@ function Town({ t, index, now }: { t: (typeof TOWNS)[number]; index: number; now
   const hit = wet > 0
   return (
     <group position={[t.x, t.y, t.z]}>
-      <Html position={[0, 1.7, 0]} center zIndexRange={[10, 0]}>
-        <div className={`pointer-events-none whitespace-nowrap rounded-lg px-2 py-1 text-center font-mono text-[10px] ring-1 transition-colors duration-500 ${hit ? 'bg-flare text-white ring-white/40 shadow-md' : 'bg-ink/80 text-fg ring-line-strong'}`}>
-          <div className="font-sans text-[11px] font-semibold">{t.name}</div>
+      <Html position={t.side > 0 ? [1.1, 0.5, t.r * 0.4] : [0, 0.25, -(t.r + 1.1)]} center zIndexRange={[10, 0]}>
+        <div className={`pointer-events-none whitespace-nowrap rounded-md px-1.5 py-0.5 text-center font-mono text-[9px] leading-tight ring-1 transition-colors duration-500 ${hit ? 'bg-flare text-white ring-white/40 shadow-md' : 'bg-ink/80 text-fg ring-line-strong'}`}>
+          <div className="font-sans text-[10px] font-semibold">{t.name}</div>
           <div>{hit ? `${wet} flooded${gone ? ` · ${gone} lost` : ''}` : `T+${t.arrival.toFixed(1)} h`}</div>
         </div>
       </Html>
@@ -667,7 +740,8 @@ function Clock({ time, playing, speed, onTick }: { time: React.MutableRefObject<
   const acc = useRef(0)
   useFrame((_, dt) => {
     if (!playing) return
-    time.current = Math.min(T_MAX, time.current + Math.min(dt, 0.05) * speed)
+    const slow = time.current < PRESSURE_TIME + BREACH_TIME + 0.4 ? 0.3 : 1
+    time.current = Math.min(T_MAX, time.current + Math.min(dt, 0.05) * speed * slow)
     acc.current += dt
     if (acc.current > 1 / 30 || time.current >= T_MAX) {
       acc.current = 0
@@ -678,12 +752,15 @@ function Clock({ time, playing, speed, onTick }: { time: React.MutableRefObject<
 }
 
 /** Pulls the camera back on narrow (portrait) screens so the whole valley stays in frame. */
+const CAM_TARGET = new THREE.Vector3(-2.2, 0.4, 0.4)
+
 function CameraFit() {
   const { camera, size } = useThree()
   useEffect(() => {
     const aspect = size.width / size.height
-    const base = new THREE.Vector3(-12, 12, 13)
+    const base = new THREE.Vector3(-13.5, 12.5, 11.5)
     camera.position.copy(base.multiplyScalar(aspect < 1 ? 1.25 / Math.max(aspect, 0.45) : 1))
+    camera.lookAt(CAM_TARGET)
     camera.updateProjectionMatrix()
   }, [camera, size.width, size.height])
   return null
@@ -721,7 +798,7 @@ export default function FloodSim() {
     if (t >= T_MAX) setPlaying(false)
   }, [t])
 
-  const front = Math.min(X1, X_DAM + RANGE * Math.pow(t / T_MAX, 0.7))
+  const front = Math.min(X1, X_DAM + RANGE * Math.pow(sinceBreach(t) / WAVE_SPAN, 0.7))
   const frontKm = Math.max(0, (front - X_DAM) * 2.5)
   const dmg = damageAt(t)
   const scrub = (v: number) => {
@@ -742,7 +819,7 @@ export default function FloodSim() {
         shadows
         dpr={[1, 1.75]}
         frameloop={visible ? 'always' : 'never'}
-        camera={{ position: [-12, 12, 13], fov: 38, near: 0.1, far: 220 }}
+        camera={{ position: [-13.5, 12.5, 11.5], fov: 38, near: 0.1, far: 220 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
         onCreated={({ scene }) => {
           scene.fog = new THREE.Fog('#c3cfd6', 34, 80)
@@ -772,19 +849,19 @@ export default function FloodSim() {
         <FloodedHouses time={time} />
         <Bridge time={time} />
         <Debris time={time} />
-        {TOWNS.map((tw, i) => (
-          <Town key={tw.name} t={tw} index={i} now={t} />
-        ))}
+        {/* ponytail: the first <Html> in this scene mounts with an empty root (drei + React 19);
+            this hidden one absorbs it so every town label renders. Swap for a DOM overlay if it recurs. */}
+        <Html position={[0, -50, 0]}><span /></Html>
+        {TOWNS.map((tw, i) => ('label' in tw && !tw.label ? null : <Town key={tw.name} t={tw} index={i} now={t} />))}
         <CameraFit />
         <Clock time={time} playing={playing} speed={1.1} onTick={setT} />
-        <OrbitControls enablePan={false} enableZoom minDistance={5} maxDistance={32} enableDamping dampingFactor={0.06} minPolarAngle={0.35} maxPolarAngle={1.25} target={[1, -0.4, 0]} rotateSpeed={0.6} />
       </Canvas>
 
       {/* HUD */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-2 p-3">
         <div className="pointer-events-auto rounded-xl bg-ink/80 px-3 py-2 ring-1 ring-line-strong backdrop-blur">
           <p className="font-mono text-lg leading-none tabular-nums">T+{t.toFixed(1)}<span className="text-xs text-muted"> h</span></p>
-          <p className="mt-1 whitespace-nowrap font-mono text-[10px] text-muted">Front {frontKm.toFixed(1)} km · breach {Math.round(breachProgress(t) * 100)}%</p>
+          <p className="mt-1 whitespace-nowrap font-mono text-[10px] text-muted">{t < PRESSURE_TIME ? `Water pressure on dam ${Math.round(pressure(t) * 100)}%` : breachProgress(t) < 1 ? `Dam breaking · ${Math.round(breachProgress(t) * 100)}%` : `Flood front ${frontKm.toFixed(1)} km`}</p>
           <p className="mt-1 whitespace-nowrap font-mono text-[10px]">
             <span className="text-flare">{dmg.flooded} flooded</span>
             <span className="text-muted"> · </span>

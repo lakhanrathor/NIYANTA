@@ -147,7 +147,8 @@ function Identity() {
 /** Muted YouTube clip with our own play/pause + scrubber, looping a fixed window. */
 function ReelPlayer({ id, start, seconds, caption, url }: { id: string; start: number; seconds: number; caption: string; url: string }) {
   const frame = useRef<HTMLIFrameElement>(null)
-  const [playing, setPlaying] = useState(true)
+  const [playing, setPlaying] = useState(false)
+  const [started, setStarted] = useState(false) // poster until the first play
   const [t, setT] = useState(0) // seconds into the clip
 
   const send = useCallback((func: string, args: unknown[] = []) => {
@@ -178,6 +179,7 @@ function ReelPlayer({ id, start, seconds, caption, url }: { id: string; start: n
   const toggle = () => {
     send(playing ? 'pauseVideo' : 'playVideo')
     setPlaying(!playing)
+    setStarted(true)
   }
 
   return (
@@ -185,12 +187,20 @@ function ReelPlayer({ id, start, seconds, caption, url }: { id: string; start: n
       <iframe
         ref={frame}
         className="pointer-events-none absolute left-1/2 top-1/2 h-[max(100%,56.25cqw)] w-[max(100%,177.78cqh)] -translate-x-1/2 -translate-y-1/2"
-        src={`https://www.youtube-nocookie.com/embed/${id}?enablejsapi=1&autoplay=1&mute=1&start=${start}&controls=0&modestbranding=1&playsinline=1&rel=0&disablekb=1`}
+        src={`https://www.youtube-nocookie.com/embed/${id}?enablejsapi=1&autoplay=0&mute=1&start=${start}&controls=0&modestbranding=1&playsinline=1&rel=0&disablekb=1`}
         title={caption}
         allow="autoplay; encrypted-media; picture-in-picture"
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
-      <div className="absolute inset-x-0 bottom-0 space-y-2 p-3">
+      {!started && (
+        <button onClick={toggle} className="group absolute inset-0 z-[1]" aria-label="Play real footage">
+          <YouTubeThumb url={url} title={caption} className="h-full w-full" />
+          <span className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-fg shadow-xl transition-transform group-hover:scale-110">
+            <Icon name="play" className="h-6 w-6" />
+          </span>
+        </button>
+      )}
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+      <div className="absolute inset-x-0 bottom-0 z-[3] space-y-2 p-3">
         <div className="flex items-end justify-between gap-3">
           <p className="text-xs text-white">{caption}</p>
           <a href={url} target="_blank" rel="noreferrer" className="chip shrink-0 !bg-ink/70 hover:!text-fg">
@@ -227,7 +237,7 @@ function ReelPlayer({ id, start, seconds, caption, url }: { id: string; start: n
 
 function Simulation() {
   const tabs = [...simulationReels.map((r) => r.label), 'Interactive 3D']
-  const [tab, setTab] = useState(0)
+  const [tab, setTab] = useState(tabs.length - 1) // open on the 3D model
   const reel = simulationReels[tab]
   const id = reel ? youtubeId(reel.url) : null
   return (
@@ -266,7 +276,7 @@ function Demos() {
           <button className="group absolute inset-0 disabled:cursor-default" disabled={!ok} onClick={() => setPlaying(true)} aria-label={`Play ${v.title}`}>
             <YouTubeThumb url={v.url} title={v.title} className="h-full w-full" />
             {ok && (
-              <span className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink transition-transform group-hover:scale-110">
+              <span className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-fg transition-transform group-hover:scale-110">
                 <Icon name="play" className="h-5 w-5" />
               </span>
             )}
